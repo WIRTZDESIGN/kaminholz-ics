@@ -29,6 +29,8 @@ export default async function handler(req, res) {
   const start = formatICSDate(created);
   const endTime = formatICSDate(end);
 
+  const maps = `https://maps.google.com/?q=${encodeURIComponent(`${adresse} ${plz} ${ort}`)}`;
+
   const ics = `
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -36,7 +38,7 @@ BEGIN:VEVENT
 SUMMARY:Kaminholz Anfrage – ${name}
 DTSTART:${start}
 DTEND:${endTime}
-DESCRIPTION:${anfrage}
+DESCRIPTION:Bestellung:\\n${anfrage}\\n\\nTelefon: ${telefon}\\nE-Mail: ${email}\\nMitteilung: ${mitteilung}\\n\\nNavigation:\\n${maps}
 LOCATION:${adresse}, ${plz} ${ort}
 END:VEVENT
 END:VCALENDAR
@@ -54,7 +56,10 @@ END:VCALENDAR
 <b>Mitteilung:</b> ${mitteilung}<br><br>
 
 <b>Anfrage:</b><br>
-${anfrage}
+${anfrage}<br><br>
+
+<b>Navigation:</b><br>
+<a href="${maps}" target="_blank">${maps}</a>
 `;
 
   const response = await fetch("https://api.resend.com/emails", {
