@@ -47,11 +47,14 @@ export default async function handler(req, res) {
     `${adresse} ${plz} ${ort}`.trim()
   )}`;
 
+  // 📦 Bestellnummer aus Anfrage extrahieren
+  const orderNumber = (anfrage.split("|")[0] || "").replace("#","").trim();
+
   const description = [
     "Bestellung:",
     anfrage,
     "",
-    `Telefon: ${telefon}`,
+    `Telefon: tel:${telefon}`,   // 📞 klickbare Telefonnummer
     `E-Mail: ${email}`,
     `Mitteilung: ${mitteilung}`,
     "",
@@ -63,7 +66,7 @@ export default async function handler(req, res) {
 VERSION:2.0
 PRODID:-//Wirtz Design//Kaminholzfabrik//DE
 BEGIN:VEVENT
-SUMMARY:${escapeICS(`Kaminholz Anfrage – ${name}`)}
+SUMMARY:${escapeICS(`${orderNumber} – Kaminholz Lieferung`)}
 DTSTART:${start}
 DTEND:${endTime}
 DESCRIPTION:${escapeICS(description)}
@@ -76,7 +79,7 @@ END:VCALENDAR`;
 
 <b>Name:</b> ${name}<br>
 <b>Email:</b> ${email}<br>
-<b>Telefon:</b> ${telefon}<br>
+<b>Telefon:</b> <a href="tel:${telefon}">${telefon}</a><br>
 <b>Adresse:</b> ${adresse}<br>
 <b>PLZ:</b> ${plz}<br>
 <b>Ort:</b> ${ort}<br>
