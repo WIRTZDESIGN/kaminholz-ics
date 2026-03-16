@@ -20,8 +20,14 @@ export default async function handler(req, res) {
   const anfrage = data.Anfrage || "";
 
   const created = new Date();
+  const end = new Date(created.getTime() + 30 * 60000); // +30 Minuten
 
-  const start = created.toISOString().replace(/[-:]/g,"").split(".")[0] + "Z";
+  function formatICSDate(date) {
+    return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  }
+
+  const start = formatICSDate(created);
+  const endTime = formatICSDate(end);
 
   const ics = `
 BEGIN:VCALENDAR
@@ -29,7 +35,7 @@ VERSION:2.0
 BEGIN:VEVENT
 SUMMARY:Kaminholz Anfrage – ${name}
 DTSTART:${start}
-DTEND:${start}
+DTEND:${endTime}
 DESCRIPTION:${anfrage}
 LOCATION:${adresse}, ${plz} ${ort}
 END:VEVENT
