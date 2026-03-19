@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   const anfrage = data.Anfrage || data.anfrage || "";
 
   const created = new Date();
-  const end = new Date(created.getTime() + 30 * 60000);
+  const end = new Date(created.getTime() + 60 * 60000);
 
   function formatICSDate(date) {
     return date.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
