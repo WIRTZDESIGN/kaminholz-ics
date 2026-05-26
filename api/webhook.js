@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   if (req.method === "GET") {
-    return res.status(200).json({ ok: true, message: "Webhook lÃ¤uft" });
+    return res.status(200).json({ ok: true, message: "Webhook läuft" });
   }
 
   if (req.method !== "POST") {
@@ -9,7 +9,7 @@ export default async function handler(req, res) {
 
   const raw = req.body || {};
 
-  // UnterstÃ¼tzt direktes JSON UND Webflow Webhook Payload
+  // Unterstützt direktes JSON UND Webflow Webhook Payload
   const data =
     raw?.payload?.data ||
     raw?.data ||
@@ -39,6 +39,10 @@ export default async function handler(req, res) {
       .replace(/;/g, "\\;");
   }
 
+  function escapeCSV(value = "") {
+    return `"${String(value).replace(/"/g, '""')}"`;
+  }
+
   const start = formatICSDate(created);
   const endTime = formatICSDate(end);
 
@@ -47,14 +51,16 @@ export default async function handler(req, res) {
     `${adresse} ${plz} ${ort}`.trim()
   )}`;
 
-  // ðŸ“¦ Bestellnummer aus Anfrage extrahieren
-  const orderNumber = (anfrage.split("|")[0] || "").replace("#","").trim();
+  // Bestellnummer aus Anfrage extrahieren
+  const orderNumber = (anfrage.split("|")[0] || "")
+    .replace("#", "")
+    .trim() || `KF-${created.getFullYear()}-${Date.now()}`;
 
   const description = [
     "Bestellung:",
     anfrage,
     "",
-    `Telefon: tel:${telefon}`,   // ðŸ“ž klickbare Telefonnummer
+    `Telefon: tel:${telefon}`,
     `E-Mail: ${email}`,
     `Mitteilung: ${mitteilung}`,
     "",
@@ -66,7 +72,7 @@ export default async function handler(req, res) {
 VERSION:2.0
 PRODID:-//Wirtz Design//Kaminholzfabrik//DE
 BEGIN:VEVENT
-SUMMARY:${escapeICS(`${orderNumber} â€“ Kaminholz Lieferung`)}
+SUMMARY:${escapeICS(`${orderNumber} – Kaminholz Lieferung`)}
 DTSTART:${start}
 DTEND:${endTime}
 DESCRIPTION:${escapeICS(description)}
@@ -74,8 +80,40 @@ LOCATION:${escapeICS(fullAddress)}
 END:VEVENT
 END:VCALENDAR`;
 
+  // CSV-Datei als Rechnungs-/Bestellgrundlage
+  const csvRows = [
+    [
+      "Bestellnummer",
+      "Datum",
+      "Name",
+      "Email",
+      "Telefon",
+      "Adresse",
+      "PLZ",
+      "Ort",
+      "Mitteilung",
+      "Anfrage"
+    ],
+    [
+      orderNumber,
+      created.toLocaleString("de-DE", { timeZone: "Europe/Berlin" }),
+      name,
+      email,
+      telefon,
+      adresse,
+      plz,
+      ort,
+      mitteilung,
+      anfrage
+    ]
+  ];
+
+  const csv = csvRows
+    .map(row => row.map(escapeCSV).join(";"))
+    .join("\n");
+
   const html = `
-<h2>Neue Anfrage fÃ¼r Kaminholz</h2>
+<h2>Neue Anfrage für Kaminholz</h2>
 
 <b>Name:</b> ${name}<br>
 <b>Email:</b> ${email}<br>
@@ -101,12 +139,16 @@ ${anfrage}<br><br>
     body: JSON.stringify({
       from: process.env.MAIL_FROM,
       to: [process.env.MAIL_TO],
-      subject: `Neue Kaminholz Anfrage â€“ ${name || "ohne Namen"}`,
+      subject: `Neue Kaminholz Anfrage – ${name || "ohne Namen"}`,
       html,
       attachments: [
         {
-          filename: "termin.ics",
+          filename: `${orderNumber}.ics`,
           content: Buffer.from(ics, "utf-8").toString("base64")
+        },
+        {
+          filename: `${orderNumber}.csv`,
+          content: Buffer.from(csv, "utf-8").toString("base64")
         }
       ]
     })
@@ -119,7 +161,8 @@ ${anfrage}<br><br>
     result,
     debug: {
       receivedKeys: Object.keys(raw || {}),
-      dataKeys: Object.keys(data || {})
+      dataKeys: Object.keys(data || {}),
+      orderNumber
     }
   });
 }
