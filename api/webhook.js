@@ -56,6 +56,9 @@ export default async function handler(req, res) {
     .replace("#", "")
     .trim() || `KF-${created.getFullYear()}-${Date.now()}`;
 
+  // Gesamtpreis aus Anfrage extrahieren
+  const gesamtpreis = anfrage.match(/Gesamt:\s*([\d.,]+)/)?.[1] || "";
+
   const description = [
     "Bestellung:",
     anfrage,
@@ -92,7 +95,8 @@ END:VCALENDAR`;
       "PLZ",
       "Ort",
       "Mitteilung",
-      "Anfrage"
+      "Anfrage",
+      "Gesamtpreis"
     ],
     [
       orderNumber,
@@ -104,7 +108,8 @@ END:VCALENDAR`;
       plz,
       ort,
       mitteilung,
-      anfrage
+      anfrage,
+      gesamtpreis
     ]
   ];
 
@@ -125,6 +130,8 @@ END:VCALENDAR`;
 
 <b>Anfrage:</b><br>
 ${anfrage}<br><br>
+
+<b>Gesamtpreis:</b> ${gesamtpreis} €<br><br>
 
 <b>Navigation:</b><br>
 <a href="${maps}" target="_blank">${maps}</a>
@@ -164,7 +171,8 @@ ${anfrage}<br><br>
     debug: {
       receivedKeys: Object.keys(raw || {}),
       dataKeys: Object.keys(data || {}),
-      orderNumber
+      orderNumber,
+      gesamtpreis
     }
   });
 }
