@@ -144,11 +144,13 @@ ${anfrage}<br><br>
       attachments: [
         {
           filename: `${orderNumber}.ics`,
-          content: Buffer.from(ics, "utf-8").toString("base64")
+          content: Buffer.from(ics, "utf-8").toString("base64"),
+          contentType: "text/calendar"
         },
         {
           filename: `${orderNumber}.csv`,
-          content: Buffer.from(csv, "utf-8").toString("base64")
+          content: Buffer.from(csv, "utf-8").toString("base64"),
+          contentType: "text/csv"
         }
       ]
     })
