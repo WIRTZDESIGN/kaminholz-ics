@@ -9,7 +9,6 @@ export default async function handler(req, res) {
 
   const raw = req.body || {};
 
-  // Unterstützt direktes JSON UND Webflow Webhook Payload
   const data =
     raw?.payload?.data ||
     raw?.data ||
@@ -43,6 +42,14 @@ export default async function handler(req, res) {
     return `"${String(value).replace(/"/g, '""')}"`;
   }
 
+  function parseEuro(value = "") {
+    return Number(String(value).replace(/\./g, "").replace(",", "."));
+  }
+
+  function formatEuro(value = 0) {
+    return value.toFixed(2).replace(".", ",");
+  }
+
   const start = formatICSDate(created);
   const endTime = formatICSDate(end);
 
@@ -51,13 +58,16 @@ export default async function handler(req, res) {
     `${adresse} ${plz} ${ort}`.trim()
   )}`;
 
-  // Bestellnummer aus Anfrage extrahieren
   const orderNumber = (anfrage.split("|")[0] || "")
     .replace("#", "")
     .trim() || `KF-${created.getFullYear()}-${Date.now()}`;
 
-  // Gesamtpreis aus Anfrage extrahieren
   const gesamtpreis = anfrage.match(/Gesamt:\s*([\d.,]+)/)?.[1] || "";
+
+  const mwstSatz = 7;
+  const brutto = parseEuro(gesamtpreis);
+  const netto = brutto ? brutto / (1 + mwstSatz / 100) : 0;
+  const mwstBetrag = brutto ? brutto - netto : 0;
 
   const description = [
     "Bestellung:",
@@ -75,7 +85,7 @@ export default async function handler(req, res) {
 VERSION:2.0
 PRODID:-//Wirtz Design//Kaminholzfabrik//DE
 BEGIN:VEVENT
-SUMMARY:${escapeICS(`${orderNumber} – Kaminholz Lieferung`)}
+SUMMARY:${escapeICS(`${orderNumber} - Kaminholz Lieferung`)}
 DTSTART:${start}
 DTEND:${endTime}
 DESCRIPTION:${escapeICS(description)}
@@ -83,7 +93,6 @@ LOCATION:${escapeICS(fullAddress)}
 END:VEVENT
 END:VCALENDAR`;
 
-  // CSV-Datei als Rechnungs-/Bestellgrundlage
   const csvRows = [
     [
       "Bestellnummer",
@@ -95,8 +104,11 @@ END:VCALENDAR`;
       "PLZ",
       "Ort",
       "Mitteilung",
-      "Anfrage",
-      "Gesamtpreis"
+      "Bestellung",
+      "MwSt-Satz",
+      "Netto",
+      "MwSt-Betrag",
+      "Brutto"
     ],
     [
       orderNumber,
@@ -109,7 +121,10 @@ END:VCALENDAR`;
       ort,
       mitteilung,
       anfrage,
-      gesamtpreis
+      `${mwstSatz}%`,
+      formatEuro(netto),
+      formatEuro(mwstBetrag),
+      formatEuro(brutto)
     ]
   ];
 
@@ -118,7 +133,7 @@ END:VCALENDAR`;
     .join("\n");
 
   const html = `
-<h2>Neue Anfrage für Kaminholz</h2>
+<h2>Neue Bestellung f&uuml;r Kaminholz</h2>
 
 <b>Name:</b> ${name}<br>
 <b>Email:</b> ${email}<br>
@@ -128,10 +143,12 @@ END:VCALENDAR`;
 <b>Ort:</b> ${ort}<br>
 <b>Mitteilung:</b> ${mitteilung}<br><br>
 
-<b>Anfrage:</b><br>
+<b>Bestellung:</b><br>
 ${anfrage}<br><br>
 
-<b>Gesamtpreis:</b> ${gesamtpreis} €<br><br>
+<b>Netto:</b> ${formatEuro(netto)} &euro;<br>
+<b>MwSt. ${mwstSatz}%:</b> ${formatEuro(mwstBetrag)} &euro;<br>
+<b>Brutto:</b> ${formatEuro(brutto)} &euro;<br><br>
 
 <b>Navigation:</b><br>
 <a href="${maps}" target="_blank">${maps}</a>
@@ -146,7 +163,7 @@ ${anfrage}<br><br>
     body: JSON.stringify({
       from: process.env.MAIL_FROM,
       to: [process.env.MAIL_TO],
-      subject: `Neue Kaminholz Anfrage – ${name || "ohne Namen"}`,
+      subject: `Neue Kaminholz Bestellung - ${name || "ohne Namen"}`,
       html,
       attachments: [
         {
@@ -172,7 +189,10 @@ ${anfrage}<br><br>
       receivedKeys: Object.keys(raw || {}),
       dataKeys: Object.keys(data || {}),
       orderNumber,
-      gesamtpreis
+      gesamtpreis,
+      netto: formatEuro(netto),
+      mwstBetrag: formatEuro(mwstBetrag),
+      brutto: formatEuro(brutto)
     }
   });
 }
