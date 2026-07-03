@@ -8,11 +8,7 @@ export default async function handler(req, res) {
   }
 
   const raw = req.body || {};
-
-  const data =
-    raw?.payload?.data ||
-    raw?.data ||
-    raw;
+  const data = raw?.payload?.data || raw?.data || raw;
 
   const name = data.Name || data.name || "";
   const email = data.Email || data.email || "";
@@ -58,9 +54,9 @@ export default async function handler(req, res) {
     `${adresse} ${plz} ${ort}`.trim()
   )}`;
 
-  const orderNumber = (anfrage.split("|")[0] || "")
-    .replace("#", "")
-    .trim() || `KF-${created.getFullYear()}-${Date.now()}`;
+  const orderNumber =
+    (anfrage.split("|")[0] || "").replace("#", "").trim() ||
+    `KF-${created.getFullYear()}-${Date.now()}`;
 
   const gesamtpreis = anfrage.match(/Gesamt:\s*([\d.,]+)/)?.[1] || "";
 
@@ -128,11 +124,9 @@ END:VCALENDAR`;
     ]
   ];
 
-  const csv = csvRows
-    .map(row => row.map(escapeCSV).join(";"))
-    .join("\n");
+  const csv = csvRows.map(row => row.map(escapeCSV).join(";")).join("\n");
 
-  const html = `
+  const sellerHtml = `
 <h2>Neue Bestellung f&uuml;r Kaminholz</h2>
 
 <b>Name:</b> ${name}<br>
@@ -154,7 +148,29 @@ ${anfrage}<br><br>
 <a href="${maps}" target="_blank">${maps}</a>
 `;
 
-  const response = await fetch("https://api.resend.com/emails", {
+  const customerHtml = `
+<h2>Vielen Dank f&uuml;r deine Bestellung</h2>
+
+<p>Hallo ${name || ""},</p>
+
+<p>deine Bestellung ist bei uns eingegangen.</p>
+
+<p>Wir pr&uuml;fen nun die Tourenplanung und melden uns anschlie&szlig;end mit einem Terminvorschlag.</p>
+
+<p><b>Bestellnummer:</b><br>
+${orderNumber}</p>
+
+<p><b>Bestellung:</b><br>
+${anfrage}</p>
+
+<p><b>Gesamtbetrag:</b><br>
+${formatEuro(brutto)} &euro;</p>
+
+<p>Viele Gr&uuml;&szlig;e<br>
+Team Kaminholz</p>
+`;
+
+  const sellerResponse = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
@@ -164,7 +180,7 @@ ${anfrage}<br><br>
       from: process.env.MAIL_FROM,
       to: [process.env.MAIL_TO],
       subject: `Neue Kaminholz Bestellung - ${name || "ohne Namen"}`,
-      html,
+      html: sellerHtml,
       attachments: [
         {
           filename: `${orderNumber}.ics`,
@@ -180,11 +196,32 @@ ${anfrage}<br><br>
     })
   });
 
-  const result = await response.json();
+  const sellerResult = await sellerResponse.json();
+
+  let customerResult = null;
+
+  if (email) {
+    const customerResponse = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        from: process.env.MAIL_FROM,
+        to: [email],
+        subject: `Deine Kaminholz-Bestellung ${orderNumber}`,
+        html: customerHtml
+      })
+    });
+
+    customerResult = await customerResponse.json();
+  }
 
   res.status(200).json({
     ok: true,
-    result,
+    sellerResult,
+    customerResult,
     debug: {
       receivedKeys: Object.keys(raw || {}),
       dataKeys: Object.keys(data || {}),
