@@ -345,7 +345,7 @@ END:VCALENDAR`;
     <strong>Eingangsbest&auml;tigung</strong> Ihrer Bestellung ist.
   </p>
 
-  <div style="background:#f6f3ec;border-left:5px solid #8b5a2b;padding:18px 20px;margin:30px 0;border-radius:6px;">
+  <div style="background:#f0f0f0;border-left:5px solid #e30613;padding:18px 20px;margin:30px 0;border-radius:6px;">
 
     <div style="font-size:13px;color:#666;text-transform:uppercase;letter-spacing:1px;">
       Bestellnummer
@@ -399,7 +399,7 @@ END:VCALENDAR`;
     <a
       href="${deliveryUrl}"
       target="_blank"
-      style="display:inline-block;background:#8b5a2b;color:#fff;text-decoration:none;padding:12px 22px;border-radius:6px;font-weight:bold;"
+      style="display:inline-block;background:#e30613;color:#fff;text-decoration:none;padding:12px 22px;border-radius:6px;font-weight:bold;"
     >
       Informationen zur Lieferung
     </a>
