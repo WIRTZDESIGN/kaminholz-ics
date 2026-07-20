@@ -479,7 +479,7 @@ END:VCALENDAR`;
           from: process.env.MAIL_FROM,
           to: [process.env.MAIL_TO],
           subject:
-            `Neue Kaminholz-Bestellung – ${name || "ohne Namen"}`,
+            `Neue Kaminholz-Bestellung | ${name || "ohne Namen"}`,
           html: sellerHtml,
           attachments: [
             {
