@@ -339,8 +339,8 @@ END:VCALENDAR`;
   </p>
 
   <p>
-    Wir pr&uuml;fen nun unsere Tourenplanung und melden uns
-    anschlie&szlig;end mit einem konkreten Liefertermin bei Ihnen.
+    Wir planen nun die optimale Liefertour und informieren Sie
+    anschlie&szlig;end per E-Mail oder telefonisch &uuml;ber Ihren Liefertermin.
     Bitte beachten Sie, dass diese E-Mail zun&auml;chst eine
     <strong>Eingangsbest&auml;tigung</strong> Ihrer Bestellung ist.
   </p>
@@ -373,10 +373,32 @@ END:VCALENDAR`;
       : ""
   }
 
-  <p style="font-size:20px;">
-    <strong>Gesamtbetrag:</strong><br>
-    ${formatEuro(brutto)} &euro;
-  </p>
+<div style="
+    background:#f0f0f0;
+    border-left:5px solid #e30613;
+    padding:18px 20px;
+    margin:30px 0;
+    border-radius:6px;
+">
+
+    <div style="
+        font-size:13px;
+        color:#666;
+        text-transform:uppercase;
+        letter-spacing:1px;
+    ">
+        Gesamtbetrag
+    </div>
+
+    <div style="
+        font-size:28px;
+        font-weight:bold;
+        color:#2d3b28;
+    ">
+        ${formatEuro(brutto)} &euro;
+    </div>
+
+</div>
 
   <hr style="margin:35px 0;border:0;border-top:1px solid #ddd;">
 
