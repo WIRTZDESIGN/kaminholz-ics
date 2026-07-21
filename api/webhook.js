@@ -44,6 +44,33 @@ export default async function handler(req, res) {
       process.env.DELIVERY_URL ||
       "https://diekleinekaminholzfabrik.de/lieferung";
 
+    async function getNextOrderNumber() {
+      const year = new Date().getFullYear();
+
+      const response = await fetch(
+        process.env.UPSTASH_REDIS_REST_URL,
+        {
+        method: "POST",
+        headers: {
+        Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
+        "Content-Type": "application/json"
+        },
+        body: JSON.stringify([
+        "INCR",
+        `kaminholz:bestellnummer:${year}`
+        ])
+      }
+    );
+
+    if (!response.ok) {
+    throw new Error("Redis konnte keine Bestellnummer erzeugen.");
+    }
+
+    const data = await response.json();
+
+    return `KF-${year}-${String(data.result).padStart(5, "0")}`;
+    }
+
     function formatICSDate(date) {
       return date
         .toISOString()
@@ -123,11 +150,7 @@ export default async function handler(req, res) {
     const maps =
       `https://maps.google.com/?q=${encodeURIComponent(mapsQuery)}`;
 
-    const orderNumber =
-      (anfrage.split("|")[0] || "")
-        .replace("#", "")
-        .trim() ||
-      `KF-${created.getFullYear()}-${Date.now()}`;
+    const orderNumber = await getNextOrderNumber();
 
     const gesamtpreis =
       anfrage.match(/Gesamt:\s*([\d.,]+)/i)?.[1] || "";
