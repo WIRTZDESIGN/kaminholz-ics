@@ -152,6 +152,13 @@ export default async function handler(req, res) {
 
     const orderNumber = await getNextOrderNumber();
 
+    const cleanedAnfrage = anfrage
+      .replace(/^#?KF-\d{4}-\d+\s*\|\s*/i, "")
+      .trim();
+
+    const finalAnfrage =
+      `${orderNumber} | ${cleanedAnfrage}`;
+
     const gesamtpreis =
       anfrage.match(/Gesamt:\s*([\d.,]+)/i)?.[1] || "";
 
@@ -181,7 +188,7 @@ export default async function handler(req, res) {
 
     const description = [
       "Bestellung:",
-      anfrage,
+      finalAnfrage,
       "",
       `Gesamt vor Rabatt: ${formatEuro(gesamtVorRabatt)} EUR`,
       rabattZeile || null,
@@ -244,7 +251,7 @@ END:VCALENDAR`;
         plz,
         ort,
         mitteilung,
-        anfrage,
+        finalAnfrage,
         formatEuro(gesamtVorRabatt),
         rabatt > 0
           ? `-${formatEuro(rabatt)}`
@@ -273,7 +280,7 @@ END:VCALENDAR`;
     const safePlz = escapeHtml(plz);
     const safeOrt = escapeHtml(ort);
     const safeMitteilung = nl2br(mitteilung);
-    const safeAnfrage = nl2br(anfrage);
+    const safeAnfrage = nl2br(finalAnfrage);
     const safeOrderNumber = escapeHtml(orderNumber);
 
     const sellerHtml = `
