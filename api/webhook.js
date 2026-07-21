@@ -478,7 +478,10 @@ END:VCALENDAR`;
         },
         body: JSON.stringify({
           from: process.env.MAIL_FROM,
-          to: [process.env.MAIL_TO],
+          to: String(process.env.MAIL_TO || "")
+            .split(",")
+            .map((mail) => mail.trim())
+            .filter(Boolean),
           subject:
             `Neue Kaminholz-Bestellung | ${name || "ohne Namen"}`,
           html: sellerHtml,
@@ -520,7 +523,7 @@ END:VCALENDAR`;
     if (email) {
       const customerPayload = {
         from: process.env.MAIL_FROM,
-        to: [email],
+        to: String(email || "").trim(),
         subject:
           `Ihre Kaminholz-Bestellung ${orderNumber}`,
         html: customerHtml
@@ -533,7 +536,7 @@ END:VCALENDAR`;
        */
       if (process.env.MAIL_REPLY_TO) {
         customerPayload.reply_to =
-          process.env.MAIL_REPLY_TO;
+          String(process.env.MAIL_REPLY_TO || "").trim();
       }
 
       const customerResponse = await fetch(
